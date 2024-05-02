@@ -1,0 +1,10 @@
+SpeechRecognition>=3.9.0
+PyAudio>=0.2.14
+soundfile>=0.12.1
+openai>=1.23.2
+python-dotenv>=0.21.1
+numpy>=1.21.6
+gtts>=2.5.1
+pydub>=0.25.1
+pyworld>=0.3.4
+pygame>=2.5.2
