@@ -4,13 +4,13 @@ import tempfile
 import speech_recognition
 from openai import OpenAI
 from dotenv import load_dotenv
-from gtts import gTTS
 from pydub import AudioSegment
 from pydub.playback import play
 import soundfile as sf
 import pyworld as pw
 from pygame import mixer
-
+import asyncio
+import edge_tts
 
 mixer.init()
 mixer.music.load('audios/advanced-machinery-warbles-29998.mp3')
@@ -33,18 +33,15 @@ SYSTEM_PROMPT = """Act like a friend, something serious, invent opinions, make h
 messages = []
 messages_time = []
 
-def synthesize_text(text):
+async def synthesize_text(text):
     print("Synthetize text")
     try:
-        myobj = gTTS(text=text, lang='es', slow=False)
-        robot_mp3 = tempfile.TemporaryFile(dir=".",suffix=".mp3", delete=False)
-        myobj.write_to_fp(robot_mp3)
-        robot_mp3.close()
-        sound = AudioSegment.from_mp3(robot_mp3.name)
+        communicate =  edge_tts.Communicate(text, voice="es-VE-PaolaNeural")
+        await communicate.save("robot.mp3")
+        sound = AudioSegment.from_mp3("robot.mp3")
         robot_wav = tempfile.TemporaryFile(dir=".",suffix=".wav", delete=False)
         sound.export(robot_wav, format="wav")
         robot_wav.close()
-
         SpeedOfSpeech=1.5
         gravity= 6
         volumeAttenuation=2
@@ -59,7 +56,7 @@ def synthesize_text(text):
 
         mixer.music.stop()
         play(AudioSegment.from_wav(robot.name))
-        os.remove(robot_mp3.name)
+        os.remove("robot.mp3")
         os.remove(robot_wav.name)
         os.remove(robot.name)
     except Exception as e:
@@ -79,7 +76,7 @@ def ask_chatgpt(input):
                     "content": completion.choices[0].message.content}
         messages.append(response)
         print(f"ChatGPT: {completion.choices[0].message.content}")
-        synthesize_text(completion.choices[0].message.content)
+        asyncio.get_event_loop().run_until_complete(synthesize_text(completion.choices[0].message.content))
     except Exception as e:
         print(f"Error Chatgpt: {e}")
         mixer.music.stop()

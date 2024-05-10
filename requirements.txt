@@ -8,3 +8,5 @@ pydub>=0.25.1
 pyworld>=0.3.4
 pygame>=2.5.2
 PyAudio>=0.2.14
+asyncio>=3.4.3
+edge-tts>=6.1.11
