@@ -9,9 +9,11 @@ from pydub.playback import play
 import soundfile as sf
 import pyworld as pw
 from pygame import mixer
-import asyncio
-import edge_tts
+import pyttsx3
 
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
 mixer.init()
 mixer.music.load('audios/advanced-machinery-warbles-29998.mp3')
 
@@ -33,20 +35,16 @@ SYSTEM_PROMPT = """Act like a friend, something serious, invent opinions, make h
 messages = []
 messages_time = []
 
-async def synthesize_text(text):
+def synthesize_text(text):
     print("Synthetize text")
     try:
-        communicate =  edge_tts.Communicate(text, voice="es-VE-PaolaNeural")
-        await communicate.save("robot.mp3")
-        sound = AudioSegment.from_mp3("robot.mp3")
-        robot_wav = tempfile.TemporaryFile(dir=".",suffix=".wav", delete=False)
-        sound.export(robot_wav, format="wav")
-        robot_wav.close()
-        SpeedOfSpeech=1.5
+        engine.save_to_file(text, "robot.wav")
+        engine.runAndWait()
+        SpeedOfSpeech=1.1
         gravity= 6
         volumeAttenuation=2
 
-        x, fs = sf.read(robot_wav.name)
+        x, fs = sf.read("robot.wav")
         f0, sp, ap = pw.wav2world(x, fs)
 
         yy = pw.synthesize(f0/gravity, sp/volumeAttenuation, ap, fs/SpeedOfSpeech, pw.default_frame_period)
@@ -56,8 +54,7 @@ async def synthesize_text(text):
 
         mixer.music.stop()
         play(AudioSegment.from_wav(robot.name))
-        os.remove("robot.mp3")
-        os.remove(robot_wav.name)
+        os.remove("robot.wav")
         os.remove(robot.name)
     except Exception as e:
         print(f"Error synthetize text: {e}")
@@ -76,7 +73,7 @@ def ask_chatgpt(input):
                     "content": completion.choices[0].message.content}
         messages.append(response)
         print(f"ChatGPT: {completion.choices[0].message.content}")
-        asyncio.get_event_loop().run_until_complete(synthesize_text(completion.choices[0].message.content))
+        synthesize_text(completion.choices[0].message.content)
     except Exception as e:
         print(f"Error Chatgpt: {e}")
         mixer.music.stop()
